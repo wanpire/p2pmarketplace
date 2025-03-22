@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import BookingForm from '../components/BookingForm';
-import { getHostelById } from '../services/api';
+import { getHostel } from '../services/api';
 
 /**
  * HostelDetails page component - displays detailed information about a specific hostel
@@ -24,7 +24,7 @@ const HostelDetails = () => {
     const fetchHostelDetails = async () => {
       try {
         setLoading(true);
-        const data = await getHostelById(id);
+        const data = await getHostel(id);
         setHostel(data);
       } catch (err) {
         console.error('Error fetching hostel details:', err);
