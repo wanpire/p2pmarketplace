@@ -1,87 +1,88 @@
 /**
- * Main Server (backend/index.js)
- * 
- * This is the entry point for the Hostel Marketplace API server.
- * It sets up the Express server, connects to the database, initializes Socket.io for chat,
- * and mounts all route handlers.
+ * Hostel Marketplace API Server
+ * Main entry point for the backend application
  */
 
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const path = require('path');
-const { initializeDatabase } = require('./models/db');
-const { initChat } = require('./chat');
-
-// Import route handlers
-const userRoutes = require('./routes/users');
-const hostelRoutes = require('./routes/hostels');
-const bookingRoutes = require('./routes/bookings');
-const messageRoutes = require('./routes/messages');
+const { initDb } = require('./database/init-db');
+const { getDbConnection } = require('./database/connection');
+const initChat = require('./chat');
+require('dotenv').config();
 
 // Initialize Express app
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
-// Create HTTP server (required for Socket.io)
+// Create HTTP server
 const server = http.createServer(app);
 
+// Initialize chat functionality with Socket.io
+initChat(server);
+
 // Middleware
-app.use(cors()); // Enable CORS for all routes
-app.use(express.json()); // Parse JSON request bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded request bodies
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// If we have a public directory for static files in the future
-// app.use(express.static(path.join(__dirname, 'public')));
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, process.env.UPLOAD_DIR || 'uploads')));
 
-// Initialize Socket.io for real-time chat
-const io = initChat(server);
+// API Routes
+// TODO: Import and use routes
+// app.use('/api/users', require('./routes/users'));
+// app.use('/api/hostels', require('./routes/hostels'));
+// app.use('/api/bookings', require('./routes/bookings'));
+// app.use('/api/messages', require('./routes/messages'));
 
-// Make io accessible to route handlers if needed
-app.set('io', io);
-
-// Mount API routes
-app.use('/api/users', userRoutes);
-app.use('/api/hostels', hostelRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/messages', messageRoutes);
-
-// Basic route for testing API health
-app.get('/', (req, res) => {
-  res.json({
-    message: 'Welcome to Hostel Marketplace API',
-    version: '1.0.0',
-    endpoints: {
-      users: '/api/users',
-      hostels: '/api/hostels',
-      bookings: '/api/bookings',
-      messages: '/api/messages'
-    }
-  });
-});
-
-// 404 handler for undefined routes
-app.use((req, res, next) => {
-  res.status(404).json({ error: 'Route not found' });
+// Basic route for testing
+app.get('/api', (req, res) => {
+  res.json({ message: 'Welcome to Hostel Marketplace API' });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Server error:', err.stack);
-  res.status(500).json({ 
-    error: 'Something went wrong!',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined
+  console.error(err.stack);
+  res.status(500).json({
+    error: 'Server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
   });
 });
 
 // Initialize database and start server
+async function initializeDatabase() {
+  return new Promise((resolve, reject) => {
+    try {
+      // Test database connection
+      getDbConnection()
+        .then(db => {
+          db.close();
+          resolve();
+        })
+        .catch(err => {
+          console.error('Database connection error:', err.message);
+          console.log('Attempting to initialize database...');
+          
+          // If connection fails, try to initialize the database
+          initDb();
+          resolve();
+        });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
 async function startServer() {
   try {
-    // Initialize database
     await initializeDatabase();
     console.log('Database initialized successfully');
     
-    // Start server
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`API available at http://localhost:${PORT}/api`);
@@ -93,13 +94,5 @@ async function startServer() {
   }
 }
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  // Application should continue running despite unhandled promise rejections
-});
-
 // Start the server
 startServer();
-
-module.exports = { app, server }; // Export for testing purposes
