@@ -9,7 +9,8 @@ ssh root@your_server_ip
 
 ### 1.2. Update System Packages
 ```bash
-apt update && apt upgrade -y
+sudo apt update
+sudo apt upgrade -y
 ```
 
 ### 1.3. Create a New User with Sudo Privileges
@@ -27,9 +28,9 @@ ssh-copy-id deployer@your_server_ip
 ### 1.5. Configure Firewall
 ```bash
 sudo ufw allow OpenSSH
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw allow 3000/tcp  # For Node.js
+sudo ufw allow 'Nginx Full'
+sudo ufw allow 5000  # Backend API
+sudo ufw allow 5001  # Socket.IO
 sudo ufw enable
 ```
 
@@ -52,14 +53,9 @@ npm -v
 sudo npm install -g pm2
 ```
 
-### 2.4. Install MongoDB (If your backend uses MongoDB)
+### 2.4. Install MySQL
 ```bash
-wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | sudo apt-key add -
-echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
-sudo apt update
-sudo apt install -y mongodb-org
-sudo systemctl start mongod
-sudo systemctl enable mongod
+sudo apt install -y mysql-server
 ```
 
 ### 2.5. Install Nginx as a Reverse Proxy
@@ -91,9 +87,12 @@ nano .env
 Add your environment variables:
 ```
 NODE_ENV=production
-PORT=3000
-MONGODB_URI=mongodb://localhost:27017/hostel_marketplace
-JWT_SECRET=your_secure_jwt_secret
+PORT=5000
+DB_HOST=localhost
+DB_USER=hostel_user
+DB_PASSWORD=your_secure_password
+DB_NAME=hostel_marketplace
+JWT_SECRET=your_jwt_secret
 # Add other necessary environment variables
 ```
 
@@ -133,7 +132,8 @@ nano .env
 
 Add:
 ```
-REACT_APP_API_URL=https://yourdomain.com/api
+REACT_APP_API_URL=https://api.yourdomain.com
+REACT_APP_SOCKET_URL=wss://api.yourdomain.com
 ```
 
 ### 5.3. Build the Frontend
@@ -150,30 +150,33 @@ sudo nano /etc/nginx/sites-available/hostel-marketplace
 
 Add the following configuration:
 ```nginx
+# Frontend
 server {
     listen 80;
-    server_name yourdomain.com www.yourdomain.com;
+    server_name yourdomain.com;
+    root /var/www/hostel-marketplace/frontend/build;
+    index index.html;
 
     location / {
-        root /var/www/hostel-marketplace/frontend/build;
-        index index.html index.htm;
         try_files $uri $uri/ /index.html;
     }
 
-    location /api {
-        proxy_pass http://localhost:3000;
+    location /static/ {
+        expires 1y;
+        add_header Cache-Control "public, no-transform";
+    }
+}
+
+# Backend API
+server {
+    listen 80;
+    server_name api.yourdomain.com;
+
+    location / {
+        proxy_pass http://localhost:5000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-
-    location /socket.io {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
     }
@@ -183,6 +186,7 @@ server {
 ### 6.2. Enable the Configuration
 ```bash
 sudo ln -s /etc/nginx/sites-available/hostel-marketplace /etc/nginx/sites-enabled/
+sudo rm /etc/nginx/sites-enabled/default
 sudo nginx -t  # Test the configuration
 sudo systemctl restart nginx
 ```
@@ -196,7 +200,7 @@ sudo apt install -y certbot python3-certbot-nginx
 
 ### 7.2. Obtain SSL Certificate
 ```bash
-sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+sudo certbot --nginx -d yourdomain.com -d api.yourdomain.com
 ```
 
 ## 8. Database Management (Optional)
@@ -204,22 +208,21 @@ sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 ### 8.1. Database Backup Script
 Create a backup script:
 ```bash
-sudo nano /var/www/backups/backup-mongodb.sh
+sudo nano /var/www/backups/backup-db.sh
 ```
 
 Add content:
 ```bash
 #!/bin/bash
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-BACKUP_DIR="/var/www/backups/mongodb"
-mkdir -p $BACKUP_DIR
-mongodump --out "$BACKUP_DIR/backup_$TIMESTAMP"
-find $BACKUP_DIR -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true
+BACKUP_DIR="/var/backups/mysql"
+DATE=$(date +%Y%m%d_%H%M%S)
+mysqldump -u hostel_user -p hostel_marketplace > $BACKUP_DIR/hostel_marketplace_$DATE.sql
+find $BACKUP_DIR -type f -mtime +7 -delete
 ```
 
 Make it executable:
 ```bash
-sudo chmod +x /var/www/backups/backup-mongodb.sh
+sudo chmod +x /var/www/backups/backup-db.sh
 ```
 
 ### 8.2. Setup Automated Backups with Cron
@@ -229,7 +232,7 @@ sudo crontab -e
 
 Add:
 ```
-0 2 * * * /var/www/backups/backup-mongodb.sh > /var/www/backups/backup.log 2>&1
+0 2 * * * /var/www/backups/backup-db.sh
 ```
 
 ## 9. Monitoring and Maintenance
@@ -311,7 +314,7 @@ sudo dpkg-reconfigure -plow unattended-upgrades
 
 ## 12. Testing Your Deployment
 
-1. Test the backend API: `curl https://yourdomain.com/api/hostels`
+1. Test the backend API: `curl https://api.yourdomain.com/hostels`
 2. Visit your website in a browser: `https://yourdomain.com`
 3. Test user registration and login
 4. Test the booking system
@@ -329,9 +332,9 @@ sudo tail -f /var/log/nginx/error.log
 pm2 logs hostel-backend
 ```
 
-### 13.3. Check MongoDB Logs
+### 13.3. Check MySQL Logs
 ```bash
-sudo tail -f /var/log/mongodb/mongod.log
+sudo tail -f /var/log/mysql/error.log
 ```
 
 ### 13.4. Server Not Starting
@@ -343,24 +346,23 @@ sudo netstat -tulpn | grep LISTEN
 ## 14. Scaling Considerations (For Future Growth)
 
 1. Set up a load balancer (e.g., with multiple application instances)
-2. MongoDB replication for database redundancy
-3. Consider using container orchestration (like Docker and Kubernetes)
-4. Set up a CDN for static assets
-5. Implement caching strategies
+2. Consider using container orchestration (like Docker and Kubernetes)
+3. Set up a CDN for static assets
+4. Implement caching strategies
 
 ## 15. Backup and Restore Procedures
 
-### 15.1. MongoDB Database Backup
+### 15.1. MySQL Database Backup
 ```bash
-mongodump --out /var/www/backups/mongodb/backup_$(date +"%Y%m%d")
+mysqldump -u hostel_user -p hostel_marketplace > /var/backups/hostel_marketplace_$(date +%Y%m%d).sql
 ```
 
-### 15.2. MongoDB Database Restore
+### 15.2. MySQL Database Restore
 ```bash
-mongorestore /var/www/backups/mongodb/backup_20230101/
+mysql -u hostel_user -p hostel_marketplace < /var/backups/hostel_marketplace_20230101.sql
 ```
 
 ### 15.3. Application Files Backup
 ```bash
-tar -czvf /var/www/backups/app_$(date +"%Y%m%d").tar.gz /var/www/hostel-marketplace
+tar -czvf /var/backups/hostel-marketplace_$(date +%Y%m%d).tar.gz /var/www/hostel-marketplace
 ``` 
