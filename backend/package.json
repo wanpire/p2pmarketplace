@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "jest"
+    "test": "jest",
+    "init-db": "node database/init-db.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
