@@ -1,0 +1,366 @@
+# Hostel Marketplace Deployment Guide for Ubuntu 22.04 VPS
+
+## 1. Initial Server Setup
+
+### 1.1. SSH into your VPS
+```bash
+ssh root@your_server_ip
+```
+
+### 1.2. Update System Packages
+```bash
+apt update && apt upgrade -y
+```
+
+### 1.3. Create a New User with Sudo Privileges
+```bash
+adduser deployer
+usermod -aG sudo deployer
+```
+
+### 1.4. Set Up SSH Key Authentication (Optional but Recommended)
+On your local machine:
+```bash
+ssh-copy-id deployer@your_server_ip
+```
+
+### 1.5. Configure Firewall
+```bash
+sudo ufw allow OpenSSH
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw allow 3000/tcp  # For Node.js
+sudo ufw enable
+```
+
+## 2. Install Required Software
+
+### 2.1. Install Node.js and npm
+```bash
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+### 2.2. Verify Installation
+```bash
+node -v
+npm -v
+```
+
+### 2.3. Install PM2 for Process Management
+```bash
+sudo npm install -g pm2
+```
+
+### 2.4. Install MongoDB (If your backend uses MongoDB)
+```bash
+wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | sudo apt-key add -
+echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+sudo apt update
+sudo apt install -y mongodb-org
+sudo systemctl start mongod
+sudo systemctl enable mongod
+```
+
+### 2.5. Install Nginx as a Reverse Proxy
+```bash
+sudo apt install -y nginx
+```
+
+## 3. Clone and Set Up Your Project
+
+### 3.1. Install Git
+```bash
+sudo apt install -y git
+```
+
+### 3.2. Clone Your Repository
+```bash
+mkdir -p /var/www
+cd /var/www
+sudo git clone https://your-repository-url.git hostel-marketplace
+sudo chown -R deployer:deployer hostel-marketplace
+```
+
+### 3.3. Set Up Environment Variables
+```bash
+cd /var/www/hostel-marketplace
+nano .env
+```
+
+Add your environment variables:
+```
+NODE_ENV=production
+PORT=3000
+MONGODB_URI=mongodb://localhost:27017/hostel_marketplace
+JWT_SECRET=your_secure_jwt_secret
+# Add other necessary environment variables
+```
+
+## 4. Backend Setup
+
+### 4.1. Install Dependencies
+```bash
+cd /var/www/hostel-marketplace/backend
+npm install
+```
+
+### 4.2. Build the Backend (if required)
+```bash
+npm run build
+```
+
+### 4.3. Set Up PM2 for the Backend
+```bash
+pm2 start index.js --name "hostel-backend"
+pm2 startup
+pm2 save
+```
+
+## 5. Frontend Setup
+
+### 5.1. Install Dependencies
+```bash
+cd /var/www/hostel-marketplace/frontend
+npm install
+```
+
+### 5.2. Set Frontend API URL
+Edit the .env file:
+```bash
+nano .env
+```
+
+Add:
+```
+REACT_APP_API_URL=https://yourdomain.com/api
+```
+
+### 5.3. Build the Frontend
+```bash
+npm run build
+```
+
+## 6. Nginx Configuration
+
+### 6.1. Create Nginx Server Block
+```bash
+sudo nano /etc/nginx/sites-available/hostel-marketplace
+```
+
+Add the following configuration:
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com www.yourdomain.com;
+
+    location / {
+        root /var/www/hostel-marketplace/frontend/build;
+        index index.html index.htm;
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location /socket.io {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+### 6.2. Enable the Configuration
+```bash
+sudo ln -s /etc/nginx/sites-available/hostel-marketplace /etc/nginx/sites-enabled/
+sudo nginx -t  # Test the configuration
+sudo systemctl restart nginx
+```
+
+## 7. SSL/TLS with Let's Encrypt
+
+### 7.1. Install Certbot
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+```
+
+### 7.2. Obtain SSL Certificate
+```bash
+sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+```
+
+## 8. Database Management (Optional)
+
+### 8.1. Database Backup Script
+Create a backup script:
+```bash
+sudo nano /var/www/backups/backup-mongodb.sh
+```
+
+Add content:
+```bash
+#!/bin/bash
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+BACKUP_DIR="/var/www/backups/mongodb"
+mkdir -p $BACKUP_DIR
+mongodump --out "$BACKUP_DIR/backup_$TIMESTAMP"
+find $BACKUP_DIR -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true
+```
+
+Make it executable:
+```bash
+sudo chmod +x /var/www/backups/backup-mongodb.sh
+```
+
+### 8.2. Setup Automated Backups with Cron
+```bash
+sudo crontab -e
+```
+
+Add:
+```
+0 2 * * * /var/www/backups/backup-mongodb.sh > /var/www/backups/backup.log 2>&1
+```
+
+## 9. Monitoring and Maintenance
+
+### 9.1. Set Up Basic Monitoring with PM2
+```bash
+pm2 install pm2-logrotate
+pm2 set pm2-logrotate:max_size 10M
+pm2 set pm2-logrotate:retain 7
+```
+
+### 9.2. View Application Logs
+```bash
+pm2 logs
+```
+
+### 9.3. Monitor System Resources
+```bash
+sudo apt install -y htop
+htop
+```
+
+## 10. Deployment Automation (Optional)
+
+### 10.1. Create a Deployment Script
+```bash
+sudo nano /var/www/hostel-marketplace/deploy.sh
+```
+
+Add content:
+```bash
+#!/bin/bash
+set -e
+
+echo "Deploying Hostel Marketplace Application..."
+
+# Navigate to project directory
+cd /var/www/hostel-marketplace
+
+# Pull latest changes
+git pull
+
+# Backend deployment
+echo "Deploying backend..."
+cd backend
+npm install
+npm run build
+pm2 restart hostel-backend
+
+# Frontend deployment
+echo "Deploying frontend..."
+cd ../frontend
+npm install
+npm run build
+
+echo "Deployment completed successfully!"
+```
+
+Make it executable:
+```bash
+sudo chmod +x /var/www/hostel-marketplace/deploy.sh
+```
+
+## 11. Security Considerations
+
+### 11.1. Configure fail2ban to Prevent Brute Force Attacks
+```bash
+sudo apt install -y fail2ban
+sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+sudo systemctl restart fail2ban
+```
+
+### 11.2. Regular Security Updates
+Set up automatic security updates:
+```bash
+sudo apt install -y unattended-upgrades
+sudo dpkg-reconfigure -plow unattended-upgrades
+```
+
+## 12. Testing Your Deployment
+
+1. Test the backend API: `curl https://yourdomain.com/api/hostels`
+2. Visit your website in a browser: `https://yourdomain.com`
+3. Test user registration and login
+4. Test the booking system
+5. Test the messaging system
+
+## 13. Troubleshooting Common Issues
+
+### 13.1. Check Nginx Logs
+```bash
+sudo tail -f /var/log/nginx/error.log
+```
+
+### 13.2. Check Application Logs
+```bash
+pm2 logs hostel-backend
+```
+
+### 13.3. Check MongoDB Logs
+```bash
+sudo tail -f /var/log/mongodb/mongod.log
+```
+
+### 13.4. Server Not Starting
+```bash
+# Check if ports are in use
+sudo netstat -tulpn | grep LISTEN
+```
+
+## 14. Scaling Considerations (For Future Growth)
+
+1. Set up a load balancer (e.g., with multiple application instances)
+2. MongoDB replication for database redundancy
+3. Consider using container orchestration (like Docker and Kubernetes)
+4. Set up a CDN for static assets
+5. Implement caching strategies
+
+## 15. Backup and Restore Procedures
+
+### 15.1. MongoDB Database Backup
+```bash
+mongodump --out /var/www/backups/mongodb/backup_$(date +"%Y%m%d")
+```
+
+### 15.2. MongoDB Database Restore
+```bash
+mongorestore /var/www/backups/mongodb/backup_20230101/
+```
+
+### 15.3. Application Files Backup
+```bash
+tar -czvf /var/www/backups/app_$(date +"%Y%m%d").tar.gz /var/www/hostel-marketplace
+``` 
