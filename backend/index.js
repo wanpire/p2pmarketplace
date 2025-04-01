@@ -9,7 +9,7 @@ const cors = require('cors');
 const path = require('path');
 const { initDb } = require('./database/init-db');
 const { getDbConnection } = require('./database/connection');
-const initChat = require('./chat');
+const initChat = require('./chat').initChat;
 require('dotenv').config();
 
 // Initialize Express app
