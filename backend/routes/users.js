@@ -9,6 +9,7 @@ const router = express.Router();
 const userModel = require('../models/user');
 const bcrypt = require('bcrypt');
 const messageModel = require('../models/message');
+const { query } = require('../database/connection');
 
 /**
  * @route   POST /api/users/register
@@ -212,5 +213,19 @@ const markedCount = await messageModel.markMessagesAsRead(myUserId, senderUserId
 
 // Getting a list of all conversations for the chat UI
 const conversations = await messageModel.getUserConversations(userId);
+
+// GET /api/users - Fetch all users
+router.get('/', async (req, res) => {
+  try {
+    const users = await query('SELECT * FROM users');
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error.message);
+    res.status(500).json({
+      error: 'Database error',
+      message: 'Failed to fetch users from the database'
+    });
+  }
+});
 
 module.exports = router; 
