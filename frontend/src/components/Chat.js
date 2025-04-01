@@ -29,6 +29,7 @@ const Chat = ({
   const [error, setError] = useState('');
   const [typing, setTyping] = useState(false);
   const [online, setOnline] = useState(false);
+  const [success, setSuccess] = useState(false);
   
   // Refs
   const socketRef = useRef(null);
@@ -244,6 +245,9 @@ const Chat = ({
           msg.id === tempId ? { ...response, temp: false } : msg
         )
       );
+      
+      // Show success message
+      setSuccess(true);
       
     } catch (err) {
       console.error('Failed to send message:', err);

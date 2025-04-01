@@ -227,7 +227,7 @@ const UserDashboard = () => {
                               <img
                                 className="h-10 w-10 rounded-md object-cover"
                                 src={booking.hostel?.image_url || 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&q=80'}
-                                alt={booking.hostel?.name}
+                                alt={booking.hostel?.name || 'Hostel thumbnail'}
                               />
                             </div>
                             <div>

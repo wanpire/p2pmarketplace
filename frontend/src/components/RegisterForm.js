@@ -105,7 +105,7 @@ const RegisterForm = () => {
       };
       
       // Send registration request
-      const response = await registerUser(registrationData);
+      await registerUser(registrationData);
       
       // Handle success
       setSuccess(true);

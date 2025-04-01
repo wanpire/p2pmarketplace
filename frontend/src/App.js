@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 
 // Page components
 import Home from './pages/Home';
@@ -11,6 +11,43 @@ import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import Navbar from './components/Navbar';
 
+// Error Boundary Component
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center p-8">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h1>
+            <p className="text-gray-600 mb-4">We're sorry, but there was an error loading this page.</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 /**
  * Main App component that sets up routing for the application
  * Includes authentication checks for protected routes
@@ -20,17 +57,28 @@ const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   // State to track if user is a host
   const [isHost, setIsHost] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Check authentication status on component mount
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const checkAuth = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        if (token) {
+          setIsAuthenticated(true);
+          // Check if user has host role
+          setIsHost(user.role === 'host');
+        }
+      } catch (error) {
+        console.error('Error checking authentication:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    if (token) {
-      setIsAuthenticated(true);
-      // Check if user has host role
-      setIsHost(user.role === 'host');
-    }
+    checkAuth();
   }, []);
   
   // Layout component that includes Navbar for all routes
@@ -38,7 +86,9 @@ const App = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
-        <Outlet />
+        <ErrorBoundary>
+          <Outlet />
+        </ErrorBoundary>
       </div>
     );
   };
@@ -53,39 +103,52 @@ const App = () => {
     return isAuthenticated && isHost ? <HostDashboard /> : <Navigate to="/login" />;
   };
   
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <Router>
-      <Routes>
-        {/* Routes with Layout (Navbar) */}
-        <Route element={<Layout />}>
-          {/* Public routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/hostels/:id" element={<HostelDetails />} />
-          
-          {/* Authentication routes */}
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/register" element={<RegisterForm />} />
-          
-          {/* Protected routes */}
-          <Route path="/dashboard/user" element={<ProtectedUserRoute />} />
-          <Route path="/dashboard/host" element={<ProtectedHostRoute />} />
-          
-          {/* Catch-all route for 404 */}
-          <Route path="*" element={
-            <div className="container mx-auto px-4 py-16 text-center">
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">Page Not Found</h1>
-              <p className="text-gray-600 mb-8">The page you are looking for doesn't exist or has been moved.</p>
-              <button 
-                onClick={() => window.history.back()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Go Back
-              </button>
-            </div>
-          } />
-        </Route>
-      </Routes>
+      <ErrorBoundary>
+        <Routes>
+          {/* Routes with Layout (Navbar) */}
+          <Route element={<Layout />}>
+            {/* Public routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/hostels/:id" element={<HostelDetails />} />
+            
+            {/* Authentication routes */}
+            <Route path="/login" element={<LoginForm />} />
+            <Route path="/register" element={<RegisterForm />} />
+            
+            {/* Protected routes */}
+            <Route path="/dashboard/user" element={<ProtectedUserRoute />} />
+            <Route path="/dashboard/host" element={<ProtectedHostRoute />} />
+            
+            {/* Catch-all route for 404 */}
+            <Route path="*" element={
+              <div className="container mx-auto px-4 py-16 text-center">
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">Page Not Found</h1>
+                <p className="text-gray-600 mb-8">The page you are looking for doesn't exist or has been moved.</p>
+                <button 
+                  onClick={() => window.history.back()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Go Back
+                </button>
+              </div>
+            } />
+          </Route>
+        </Routes>
+      </ErrorBoundary>
     </Router>
   );
 };

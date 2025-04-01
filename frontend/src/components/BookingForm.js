@@ -21,7 +21,7 @@ const BookingForm = ({ hostelId, price, hostelName }) => {
   const [totalPrice, setTotalPrice] = useState(0);
   
   // Get current user from localStorage (hardcoded user_id as requested)
-  const [userId, setUserId] = useState(1); // Hardcoded for now
+  const [userId] = useState(1); // Hardcoded for now
   
   // Calculate minimum dates for check-in and check-out
   const today = new Date().toISOString().split('T')[0];
