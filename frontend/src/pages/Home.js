@@ -22,6 +22,12 @@ const Home = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Test message to verify rendering */}
+      <div className="bg-green-100 p-4 rounded m-4 border border-green-500">
+        <p className="text-green-800 font-bold">✅ Frontend rendering test successful!</p>
+        <p className="text-green-700">If you can see this message, the router issue has been fixed.</p>
+      </div>
+      
       {/* Hero section */}
       <div className="relative">
         {/* Hero image */}
