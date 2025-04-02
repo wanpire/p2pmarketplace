@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SearchBar from '../components/SearchBar';
-import DatePicker from 'react-datepicker';
-import "react-datepicker/dist/react-datepicker.css";
 
 // Sample hostel data
 const sampleHostels = [
@@ -49,16 +46,20 @@ const sampleHostels = [
  */
 const Home = () => {
   const navigate = useNavigate();
-  const [isSearching, setIsSearching] = useState(false);
-  const [checkInDate, setCheckInDate] = useState(null);
-  const [checkOutDate, setCheckOutDate] = useState(null);
+  const [checkInDate, setCheckInDate] = useState('');
+  const [checkOutDate, setCheckOutDate] = useState('');
+  const [location, setLocation] = useState('');
   
-  // Handle search results from SearchBar component
-  const handleSearchResults = (results) => {
+  const handleSearch = (e) => {
+    e.preventDefault();
+    // Navigate to search page with form data
     navigate('/search', { 
       state: { 
-        results: results,
-        searchParams: results.searchParams || {} 
+        searchParams: {
+          location,
+          checkInDate,
+          checkOutDate
+        }
       } 
     });
   };
@@ -92,7 +93,7 @@ const Home = () => {
               <h2 className="text-2xl font-semibold text-white mb-6">Find Your Next Stay</h2>
               
               {/* Search form */}
-              <form className="space-y-4">
+              <form onSubmit={handleSearch} className="space-y-4">
                 {/* Location field */}
                 <div>
                   <label htmlFor="location" className="block text-sm font-medium text-white mb-1">
@@ -107,36 +108,40 @@ const Home = () => {
                     <input
                       type="text"
                       id="location"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
                       className="w-full pl-10 pr-4 py-3 bg-white/90 text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       placeholder="City, country or region"
                     />
                   </div>
                 </div>
                 
-                {/* Date pickers */}
+                {/* Date inputs */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="check-in" className="block text-sm font-medium text-white mb-1">
                       Check-in Date
                     </label>
-                    <DatePicker
-                      selected={checkInDate}
-                      onChange={date => setCheckInDate(date)}
+                    <input
+                      type="date"
+                      id="check-in"
+                      value={checkInDate}
+                      onChange={(e) => setCheckInDate(e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
                       className="w-full px-4 py-3 bg-white/90 text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      placeholderText="Select check-in date"
-                      minDate={new Date()}
                     />
                   </div>
                   <div>
                     <label htmlFor="check-out" className="block text-sm font-medium text-white mb-1">
                       Check-out Date
                     </label>
-                    <DatePicker
-                      selected={checkOutDate}
-                      onChange={date => setCheckOutDate(date)}
+                    <input
+                      type="date"
+                      id="check-out"
+                      value={checkOutDate}
+                      onChange={(e) => setCheckOutDate(e.target.value)}
+                      min={checkInDate || new Date().toISOString().split('T')[0]}
                       className="w-full px-4 py-3 bg-white/90 text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      placeholderText="Select check-out date"
-                      minDate={checkInDate || new Date()}
                     />
                   </div>
                 </div>
