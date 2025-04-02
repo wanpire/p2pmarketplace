@@ -1,6 +1,48 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+
+// Sample hostel data
+const sampleHostels = [
+  {
+    id: 1,
+    name: "Mountain View Hostel",
+    location: "Swiss Alps, Switzerland",
+    price: 45,
+    rating: 4.8,
+    reviews: 128,
+    image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: 2,
+    name: "Beachfront Backpackers",
+    location: "Bali, Indonesia",
+    price: 25,
+    rating: 4.6,
+    reviews: 256,
+    image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: 3,
+    name: "Urban Jungle Hostel",
+    location: "Berlin, Germany",
+    price: 35,
+    rating: 4.7,
+    reviews: 189,
+    image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: 4,
+    name: "Desert Oasis Hostel",
+    location: "Marrakech, Morocco",
+    price: 30,
+    rating: 4.5,
+    reviews: 145,
+    image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+  }
+];
 
 /**
  * Home page component - main landing page for the hostel marketplace
@@ -8,10 +50,11 @@ import SearchBar from '../components/SearchBar';
 const Home = () => {
   const navigate = useNavigate();
   const [isSearching, setIsSearching] = useState(false);
+  const [checkInDate, setCheckInDate] = useState(null);
+  const [checkOutDate, setCheckOutDate] = useState(null);
   
   // Handle search results from SearchBar component
   const handleSearchResults = (results) => {
-    // Navigate to search page with results
     navigate('/search', { 
       state: { 
         results: results,
@@ -22,138 +65,172 @@ const Home = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Test message to verify rendering */}
-      <div className="bg-green-100 p-4 rounded m-4 border border-green-500">
-        <p className="text-green-800 font-bold">✅ Frontend rendering test successful!</p>
-        <p className="text-green-700">If you can see this message, the router issue has been fixed.</p>
-      </div>
-      
-      {/* Hero section */}
+      {/* Hero section with gradient overlay */}
       <div className="relative">
-        {/* Hero image */}
-        <div className="h-96 md:h-[500px] bg-cover bg-center" 
+        {/* Hero image with gradient overlay */}
+        <div className="h-[600px] md:h-[700px] bg-cover bg-center relative" 
           style={{ 
             backgroundImage: "url('https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')",
             backgroundPosition: "center 40%"
           }}>
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"></div>
         </div>
         
         {/* Content overlay */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white px-4 md:px-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-center mb-4">
+          <h1 className="text-5xl md:text-6xl font-bold text-center mb-6 font-display">
             Find Your Perfect Hostel Experience
           </h1>
-          <p className="text-xl md:text-2xl text-center mb-8 max-w-3xl">
+          <p className="text-xl md:text-2xl text-center mb-12 max-w-3xl font-light">
             Connect directly with hosts worldwide for authentic, affordable stays
           </p>
           
-          {/* Search container with more pronounced appearance */}
-          <div className="w-full max-w-3xl rounded-lg shadow-xl overflow-hidden">
-            <SearchBar 
-              onSearchResults={handleSearchResults}
-              isLoading={isSearching}
-              setIsLoading={setIsSearching}
-            />
+          {/* Search container with glass effect */}
+          <div className="w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden bg-white/10 backdrop-blur-md border border-white/20">
+            <div className="p-6">
+              <h2 className="text-2xl font-semibold text-white mb-6">Find Your Next Stay</h2>
+              
+              {/* Search form */}
+              <form className="space-y-4">
+                {/* Location field */}
+                <div>
+                  <label htmlFor="location" className="block text-sm font-medium text-white mb-1">
+                    Where do you want to go?
+                  </label>
+                  <div className="relative rounded-lg overflow-hidden">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      id="location"
+                      className="w-full pl-10 pr-4 py-3 bg-white/90 text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      placeholder="City, country or region"
+                    />
+                  </div>
+                </div>
+                
+                {/* Date pickers */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="check-in" className="block text-sm font-medium text-white mb-1">
+                      Check-in Date
+                    </label>
+                    <DatePicker
+                      selected={checkInDate}
+                      onChange={date => setCheckInDate(date)}
+                      className="w-full px-4 py-3 bg-white/90 text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      placeholderText="Select check-in date"
+                      minDate={new Date()}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="check-out" className="block text-sm font-medium text-white mb-1">
+                      Check-out Date
+                    </label>
+                    <DatePicker
+                      selected={checkOutDate}
+                      onChange={date => setCheckOutDate(date)}
+                      className="w-full px-4 py-3 bg-white/90 text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      placeholderText="Select check-out date"
+                      minDate={checkInDate || new Date()}
+                    />
+                  </div>
+                </div>
+                
+                {/* Search button */}
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Search Hostels
+                </button>
+              </form>
+            </div>
           </div>
+        </div>
+      </div>
+      
+      {/* Featured Hostels Section */}
+      <div className="container mx-auto py-16 px-4 md:px-8">
+        <h2 className="text-3xl font-bold text-center mb-12">Featured Hostels</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {sampleHostels.map(hostel => (
+            <div key={hostel.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="relative h-48">
+                <img
+                  src={hostel.image}
+                  alt={hostel.name}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-4 right-4 bg-white/90 px-3 py-1 rounded-full text-sm font-semibold">
+                  ${hostel.price}/night
+                </div>
+              </div>
+              <div className="p-6">
+                <h3 className="text-xl font-semibold mb-2">{hostel.name}</h3>
+                <p className="text-gray-600 mb-4">{hostel.location}</p>
+                <div className="flex items-center">
+                  <div className="flex items-center text-yellow-400">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.363 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.363-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <span className="ml-1">{hostel.rating}</span>
+                  </div>
+                  <span className="text-gray-500 ml-2">({hostel.reviews} reviews)</span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
       
       {/* Features section */}
-      <div className="container mx-auto py-16 px-4 md:px-8">
-        <h2 className="text-3xl font-bold text-center mb-12">Why Choose Our Platform?</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Feature 1 */}
-          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold text-center mb-2">No Hidden Fees</h3>
-            <p className="text-gray-600 text-center">
-              Pay only for your stay with transparent pricing and no surprise charges.
-            </p>
-          </div>
-          
-          {/* Feature 2 */}
-          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold text-center mb-2">Meet Travelers</h3>
-            <p className="text-gray-600 text-center">
-              Connect with like-minded travelers from around the world.
-            </p>
-          </div>
-          
-          {/* Feature 3 */}
-          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold text-center mb-2">Unique Experiences</h3>
-            <p className="text-gray-600 text-center">
-              Discover authentic local experiences curated by hosts who know their city best.
-            </p>
-          </div>
-        </div>
-      </div>
-      
-      {/* Testimonials section */}
-      <div className="bg-gray-100 py-16 px-4 md:px-8">
+      <div className="bg-gray-50 py-16 px-4 md:px-8">
         <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">What Our Users Say</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">Why Choose Our Platform?</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Testimonial 1 */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="flex items-center mb-4">
-                <div className="h-12 w-12 rounded-full bg-gray-300 flex-shrink-0"></div>
-                <div className="ml-4">
-                  <h4 className="font-semibold">Sarah Johnson</h4>
-                  <p className="text-sm text-gray-600">Backpacker from Australia</p>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="bg-white rounded-xl shadow-md p-8 hover:shadow-lg transition-shadow">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
-              <p className="text-gray-700">
-                "I've used this platform for my entire Europe trip and found amazing hostels in every city. 
-                The direct communication with hosts made planning so much easier!"
+              <h3 className="text-xl font-semibold text-center mb-4">No Hidden Fees</h3>
+              <p className="text-gray-600 text-center">
+                Pay only for your stay with transparent pricing and no surprise charges.
               </p>
             </div>
             
-            {/* Testimonial 2 */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="flex items-center mb-4">
-                <div className="h-12 w-12 rounded-full bg-gray-300 flex-shrink-0"></div>
-                <div className="ml-4">
-                  <h4 className="font-semibold">Carlos Mendez</h4>
-                  <p className="text-sm text-gray-600">Hostel Owner in Barcelona</p>
-                </div>
+            {/* Feature 2 */}
+            <div className="bg-white rounded-xl shadow-md p-8 hover:shadow-lg transition-shadow">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
               </div>
-              <p className="text-gray-700">
-                "As a hostel owner, this platform has helped us connect with travelers looking for authentic 
-                experiences. The direct booking system saves everyone money too!"
+              <h3 className="text-xl font-semibold text-center mb-4">Meet Travelers</h3>
+              <p className="text-gray-600 text-center">
+                Connect with like-minded travelers from around the world.
               </p>
             </div>
             
-            {/* Testimonial 3 */}
-            <div className="bg-white p-6 rounded-lg shadow-md md:col-span-2 lg:col-span-1">
-              <div className="flex items-center mb-4">
-                <div className="h-12 w-12 rounded-full bg-gray-300 flex-shrink-0"></div>
-                <div className="ml-4">
-                  <h4 className="font-semibold">Priya Sharma</h4>
-                  <p className="text-sm text-gray-600">Solo Traveler from India</p>
-                </div>
+            {/* Feature 3 */}
+            <div className="bg-white rounded-xl shadow-md p-8 hover:shadow-lg transition-shadow">
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
               </div>
-              <p className="text-gray-700">
-                "The community aspect of this platform makes solo traveling less intimidating. I've made 
-                friends from all over the world through the hostels I've found here!"
+              <h3 className="text-xl font-semibold text-center mb-4">Unique Experiences</h3>
+              <p className="text-gray-600 text-center">
+                Discover authentic local experiences curated by hosts who know their city best.
               </p>
             </div>
           </div>
@@ -170,13 +247,13 @@ const Home = () => {
           <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             <button 
               onClick={() => navigate('/register')}
-              className="bg-white text-blue-600 px-8 py-3 rounded-md font-semibold hover:bg-gray-100 transition-colors"
+              className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
             >
               Sign Up
             </button>
             <button 
-              onClick={() => navigate('/hostels')}
-              className="bg-transparent border-2 border-white text-white px-8 py-3 rounded-md font-semibold hover:bg-white hover:text-blue-600 transition-colors"
+              onClick={() => navigate('/search')}
+              className="bg-transparent border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors"
             >
               Browse Hostels
             </button>
