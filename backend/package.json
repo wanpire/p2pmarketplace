@@ -1,13 +1,13 @@
 {
   "name": "hostel-marketplace-backend",
   "version": "1.0.0",
-  "description": "Backend server for Hostel Marketplace application",
+  "description": "Backend API for Hostel Marketplace",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "jest",
-    "init-db": "node database/init-db.js"
+    "init-db": "node scripts/init-db.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

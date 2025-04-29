@@ -12,7 +12,7 @@ const { getDatabase } = require('./db');
  * 
  * @param {string} username - Unique username
  * @param {string} password - User password (will be hashed)
- * @param {string} role - User role ('user' or 'host')
+ * @param {string} role - User role ('guest', 'host', or 'admin')
  * @param {string} email - User email
  * @returns {Promise<object>} - Created user object
  */
@@ -25,8 +25,8 @@ async function createUser(username, password, role, email) {
   
   return new Promise((resolve, reject) => {
     // Validate role
-    if (role !== 'user' && role !== 'host') {
-      return reject(new Error('Invalid role. Must be "user" or "host"'));
+    if (role !== 'guest' && role !== 'host' && role !== 'admin') {
+      return reject(new Error('Invalid role. Must be "guest", "host", or "admin"'));
     }
     
     const query = `

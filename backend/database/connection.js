@@ -6,7 +6,14 @@
 
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
+
+// Ensure data directory exists
+const dataDir = path.join(__dirname, 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
 
 // Database file path from .env or default path
 const dbPath = process.env.DB_PATH || path.join(__dirname, 'data', 'hostel_marketplace.sqlite');

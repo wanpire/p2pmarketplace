@@ -101,7 +101,7 @@ const RegisterForm = () => {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        is_host: formData.is_host
+        role: formData.is_host ? 'host' : 'guest'
       };
       
       // Send registration request

@@ -26,8 +26,8 @@ router.post('/register', async (req, res) => {
     }
     
     // Validate role
-    if (role !== 'user' && role !== 'host') {
-      return res.status(400).json({ error: 'Role must be "user" or "host"' });
+    if (role !== 'guest' && role !== 'host' && role !== 'admin') {
+      return res.status(400).json({ error: 'Role must be "guest", "host", or "admin"' });
     }
     
     // Validate email format
