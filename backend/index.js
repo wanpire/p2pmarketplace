@@ -25,7 +25,7 @@ initChat(server);
 // Middleware
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-frontend-domain.com'] 
+    ? ['https://hosty.alonet.co'] 
     : ['http://localhost:3000'],
   credentials: true,
   optionsSuccessStatus: 200
