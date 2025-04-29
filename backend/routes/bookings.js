@@ -7,12 +7,6 @@
 const express = require('express');
 const router = express.Router();
 const bookingModel = require('../models/booking');
-const messageRoutes = require('./routes/messages');
-
-const app = express();
-
-app.use(express.json());
-app.use('/api/messages', messageRoutes);
 
 /**
  * @route   POST /api/bookings/add
@@ -244,8 +238,4 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
-
-app.listen(3000, () => {
-  console.log('Server running on port 3000');
-}); 
+module.exports = router; 
