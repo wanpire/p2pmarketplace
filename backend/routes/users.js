@@ -198,8 +198,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Examples of using the message model:
 /*
+// Example code - commented out to prevent top-level await errors
 // Sending a message
 const newMessage = await messageModel.sendMessage(
   senderId,

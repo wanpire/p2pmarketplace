@@ -4,7 +4,7 @@
  * Handles all database operations related to users
  */
 
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { getDatabase } = require('./db');
 
 /**
