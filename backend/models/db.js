@@ -10,13 +10,23 @@ const path = require('path');
 const fs = require('fs');
 
 // Ensure database directory exists
-const dbDir = path.join(__dirname, '../../database');
+const dbDir = path.join(__dirname, '../database');
+console.log('Database directory path:', dbDir);
 if (!fs.existsSync(dbDir)) {
+  console.log('Creating database directory:', dbDir);
   fs.mkdirSync(dbDir, { recursive: true });
 }
 
 // Database file path
-const dbPath = path.join(dbDir, 'hostel.db');
+const dbPath = path.join(dbDir, 'data', 'hostel.db');
+console.log('Database file path:', dbPath);
+
+// Create data directory if it doesn't exist
+const dataDir = path.join(dbDir, 'data');
+if (!fs.existsSync(dataDir)) {
+  console.log('Creating data directory:', dataDir);
+  fs.mkdirSync(dataDir, { recursive: true });
+}
 
 // Initialize database connection
 let db = null;
