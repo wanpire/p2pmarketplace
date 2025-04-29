@@ -198,6 +198,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Examples of using the message model:
+/*
 // Sending a message
 const newMessage = await messageModel.sendMessage(
   senderId,
@@ -213,6 +215,7 @@ const markedCount = await messageModel.markMessagesAsRead(myUserId, senderUserId
 
 // Getting a list of all conversations for the chat UI
 const conversations = await messageModel.getUserConversations(userId);
+*/
 
 // GET /api/users - Fetch all users
 router.get('/', async (req, res) => {
