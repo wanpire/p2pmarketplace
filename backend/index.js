@@ -26,10 +26,12 @@ initChat(server);
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://hosty.alonet.co'] 
-    : ['http://localhost:3000'],
+    : ['http://localhost:3000', 'http://localhost:5000', 'http://localhost:8080'],
   credentials: true,
   optionsSuccessStatus: 200
 };
+
+console.log('CORS configuration:', corsOptions);
 
 app.use(cors(corsOptions));
 app.use(express.json());
