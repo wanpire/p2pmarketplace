@@ -23,10 +23,15 @@ const server = http.createServer(app);
 initChat(server);
 
 // Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
-}));
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-frontend-domain.com'] 
+    : ['http://localhost:3000'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -34,11 +39,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, process.env.UPLOAD_DIR || 'uploads')));
 
 // API Routes
-// TODO: Import and use routes
-// app.use('/api/users', require('./routes/users'));
-// app.use('/api/hostels', require('./routes/hostels'));
-// app.use('/api/bookings', require('./routes/bookings'));
-// app.use('/api/messages', require('./routes/messages'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/hostels', require('./routes/hostels'));
+app.use('/api/bookings', require('./routes/bookings'));
+app.use('/api/messages', require('./routes/messages'));
 
 // Basic route for testing
 app.get('/api', (req, res) => {
