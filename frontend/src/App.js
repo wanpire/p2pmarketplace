@@ -69,7 +69,7 @@ const App = () => {
         if (token) {
           setIsAuthenticated(true);
           // Check if user has host role
-          setIsHost(user.role === 'host');
+          setIsHost(user.is_host);
         }
       } catch (error) {
         console.error('Error checking authentication:', error);
@@ -86,6 +86,17 @@ const App = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
+        <ErrorBoundary>
+          <Outlet />
+        </ErrorBoundary>
+      </div>
+    );
+  };
+  
+  // Authentication layout without Navbar
+  const AuthLayout = () => {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <ErrorBoundary>
           <Outlet />
         </ErrorBoundary>
@@ -117,16 +128,18 @@ const App = () => {
   return (
     <ErrorBoundary>
       <Routes>
+        {/* Authentication routes without Navbar */}
+        <Route element={<AuthLayout />}>
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/register" element={<RegisterForm />} />
+        </Route>
+        
         {/* Routes with Layout (Navbar) */}
         <Route element={<Layout />}>
           {/* Public routes */}
           <Route path="/" element={<Home />} />
           <Route path="/search" element={<Search />} />
           <Route path="/hostels/:id" element={<HostelDetails />} />
-          
-          {/* Authentication routes */}
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/register" element={<RegisterForm />} />
           
           {/* Protected routes */}
           <Route path="/dashboard/user" element={<ProtectedUserRoute />} />

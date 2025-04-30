@@ -101,11 +101,15 @@ const RegisterForm = () => {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        role: formData.is_host ? 'host' : 'guest'
+        is_host: formData.is_host
       };
       
+      console.log('Sending registration data:', registrationData);
+      
       // Send registration request
-      await registerUser(registrationData);
+      const response = await registerUser(registrationData);
+      
+      console.log('Registration successful:', response);
       
       // Handle success
       setSuccess(true);
@@ -119,12 +123,12 @@ const RegisterForm = () => {
         is_host: false
       });
       
-      // Redirect to login page after a delay
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
+      // Redirect to login page immediately 
+      navigate('/login');
       
     } catch (err) {
+      console.error('Registration error:', err);
+      
       // Handle different error scenarios
       const errorMessage = err.response?.data?.error || 
                          err.response?.data?.message ||

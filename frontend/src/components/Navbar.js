@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { logoutUser } from '../services/api';
 
 /**
@@ -10,21 +10,38 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Check if user is logged in
   useEffect(() => {
+    console.log("Navbar: Checking authentication status");
+    const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    
+    if (token && storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        console.log("Navbar: User authenticated:", parsedUser);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+        setUser(null);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    } else {
+      console.log("Navbar: No authenticated user found");
+      setUser(null);
     }
   }, [location.pathname]); // Re-check when route changes
 
   // Handle logout
   const handleLogout = () => {
+    console.log("Navbar: Logging out user");
     logoutUser();
     setUser(null);
     setIsOpen(false);
-    // Redirect to home page can be added here if using history hook
+    navigate('/');
   };
 
   // Toggle mobile menu

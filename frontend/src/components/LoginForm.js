@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { loginUser } from '../services/api';
 
@@ -19,9 +19,25 @@ const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // React Router navigation
   const navigate = useNavigate();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    
+    if (token && user) {
+      const userData = JSON.parse(user);
+      if (userData.is_host) {
+        navigate('/dashboard/host');
+      } else {
+        navigate('/dashboard/user');
+      }
+    }
+  }, [navigate, isAuthenticated]);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -80,17 +96,17 @@ const LoginForm = () => {
       
       // Check if we got a user object and token back
       if (response.user && response.token) {
-        // Redirect to appropriate dashboard based on user type
-        if (response.user.is_host) {
-          navigate('/dashboard/host');
-        } else {
-          navigate('/dashboard/user');
-        }
+        console.log('Login successful, user:', response.user);
+        setIsAuthenticated(true);
+        
+        // Force reload to update the navbar state
+        window.location.href = response.user.is_host ? '/dashboard/host' : '/dashboard/user';
       } else {
         // Unexpected response format
         setError('Something went wrong. Please try again.');
       }
     } catch (err) {
+      console.error('Login error:', err);
       // Handle different error scenarios
       const errorMessage = err.response?.data?.error || 
                          err.response?.data?.message ||
