@@ -8,7 +8,7 @@ const express = require('express');
 const router = express.Router();
 const userModel = require('../models/user');
 const bcrypt = require('bcryptjs');
-const messageModel = require('../models/message');
+// const messageModel = require('../models/message'); // Commented out until message model is available
 const { query } = require('../database/connection');
 
 /**
