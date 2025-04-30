@@ -209,7 +209,7 @@ async function verifyCredentials(loginIdentifier, password) {
         }
         
         // Never expose password hash
-        const { password, ...userWithoutPassword } = user;
+        const { password: passwordHash, ...userWithoutPassword } = user;
         resolve(userWithoutPassword);
       } catch (error) {
         reject(error);
