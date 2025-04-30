@@ -8,8 +8,12 @@ const express = require('express');
 const router = express.Router();
 const userModel = require('../models/user');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 // messageModel import removed - was causing errors and not used in main route functionality
 const { query } = require('../database/connection');
+
+// Get JWT secret from environment or use a default for development
+const JWT_SECRET = process.env.JWT_SECRET || 'your_default_jwt_secret_for_development';
 
 /**
  * @route   POST /api/users/register
@@ -97,13 +101,20 @@ router.post('/login', async (req, res) => {
     
     console.log('Login successful for user:', user.username);
     
+    // Generate a JWT token
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '7d' } // Token expires in 7 days
+    );
+    
     // Login successful
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     res.status(200).json({
       success: true,
       message: 'Login successful',
-      token: 'dummy-token-' + user.id, // Simple placeholder token
+      token: token,
       user: {
         id: user.id,
         username: user.username,
