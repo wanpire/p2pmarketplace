@@ -4,9 +4,12 @@
  * Express routes for booking management including creating and retrieving bookings
  */
 
+// Required dependencies
 const express = require('express');
 const router = express.Router();
 const bookingModel = require('../models/booking');
+
+// Do not import './routes/messages' here - this causes MODULE_NOT_FOUND errors
 
 /**
  * @route   POST /api/bookings/add
