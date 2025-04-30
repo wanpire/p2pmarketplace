@@ -9,6 +9,7 @@ const cors = require('cors');
 const path = require('path');
 const { initDb } = require('./database/init-db');
 const { getDbConnection } = require('./database/connection');
+const { initializeDatabase } = require('./models/db');
 const initChat = require('./chat').initChat;
 require('dotenv').config();
 
@@ -61,14 +62,13 @@ app.use((err, req, res, next) => {
 });
 
 // Initialize database and start server
-async function initializeDatabase() {
+async function initializeAllDatabases() {
   try {
-    // Test database connection
+    // Initialize the main database connection
     try {
       const db = await getDbConnection();
       db.close();
       console.log('Successfully connected to existing database');
-      return;
     } catch (err) {
       console.error('Database connection error:', err.message);
       console.log('Attempting to initialize database...');
@@ -76,6 +76,15 @@ async function initializeDatabase() {
       // If connection fails, initialize the database and wait for it to complete
       await initDb();
       console.log('Database initialized successfully');
+    }
+
+    // Also initialize the database used by models
+    try {
+      await initializeDatabase();
+      console.log('Model database connection initialized successfully');
+    } catch (err) {
+      console.error('Failed to initialize model database:', err.message);
+      throw err;
     }
   } catch (error) {
     console.error('Failed to initialize database:', error.message);
@@ -85,7 +94,7 @@ async function initializeDatabase() {
 
 async function startServer() {
   try {
-    await initializeDatabase();
+    await initializeAllDatabases();
     
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

@@ -8,24 +8,34 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
+require('dotenv').config();
+
+// Database file path from .env or default path
+let dbPath;
+if (process.env.DB_PATH && (process.env.DB_PATH.startsWith('/') || process.env.DB_PATH.includes(':'))) {
+  // If it's an absolute path, use it directly
+  dbPath = process.env.DB_PATH;
+} else if (process.env.DB_PATH) {
+  // If it's a relative path, resolve it from the current directory
+  dbPath = path.resolve(process.cwd(), process.env.DB_PATH);
+} else if (process.env.DATABASE_PATH && (process.env.DATABASE_PATH.startsWith('/') || process.env.DATABASE_PATH.includes(':'))) {
+  // Same for DATABASE_PATH
+  dbPath = process.env.DATABASE_PATH;
+} else if (process.env.DATABASE_PATH) {
+  dbPath = path.resolve(process.cwd(), process.env.DATABASE_PATH);
+} else {
+  // Default path
+  dbPath = path.join(__dirname, '../database/data/hostel.db');
+}
 
 // Ensure database directory exists
-const dbDir = path.join(__dirname, '../database');
-console.log('Database directory path:', dbDir);
+const dbDir = path.dirname(dbPath);
+console.log('Model Database directory path:', dbDir);
+console.log('Model Database file path:', dbPath);
+
 if (!fs.existsSync(dbDir)) {
   console.log('Creating database directory:', dbDir);
   fs.mkdirSync(dbDir, { recursive: true });
-}
-
-// Database file path
-const dbPath = path.join(dbDir, 'data', 'hostel.db');
-console.log('Database file path:', dbPath);
-
-// Create data directory if it doesn't exist
-const dataDir = path.join(dbDir, 'data');
-if (!fs.existsSync(dataDir)) {
-  console.log('Creating data directory:', dataDir);
-  fs.mkdirSync(dataDir, { recursive: true });
 }
 
 // Initialize database connection
@@ -46,22 +56,18 @@ function initializeDatabase() {
         console.error('Error connecting to SQLite database:', err.message);
         return reject(err);
       }
-      console.log('Connected to the SQLite database.');
+      console.log('Connected to the SQLite database for models.');
       
-      // If database didn't exist, initialize it with schema
-      if (!dbExists) {
-        const sqlInit = fs.readFileSync(path.join(dbDir, 'init.sql'), 'utf8');
-        db.exec(sqlInit, (err) => {
-          if (err) {
-            console.error('Error initializing database schema:', err.message);
-            return reject(err);
-          }
-          console.log('Database schema initialized successfully.');
-          resolve(db);
-        });
-      } else {
+      // Enable foreign keys
+      db.run('PRAGMA foreign_keys = ON', (err) => {
+        if (err) {
+          console.error('Error enabling foreign keys:', err.message);
+          reject(err);
+          return;
+        }
+        
         resolve(db);
-      }
+      });
     });
   });
 }
