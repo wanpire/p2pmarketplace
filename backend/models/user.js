@@ -176,17 +176,23 @@ function updateUser(id, updates) {
 /**
  * Verify user credentials
  * 
- * @param {string} username - Username
+ * @param {string} loginIdentifier - Username or email
  * @param {string} password - Password to verify
  * @returns {Promise<object|null>} - User object if credentials are valid, null otherwise
  */
-async function verifyCredentials(username, password) {
+async function verifyCredentials(loginIdentifier, password) {
   const db = getDatabase();
   
   return new Promise((resolve, reject) => {
-    const query = 'SELECT * FROM users WHERE username = ?';
+    // Check if the loginIdentifier is an email (contains @)
+    const isEmail = loginIdentifier.includes('@');
     
-    db.get(query, [username], async (err, user) => {
+    // Query based on whether the identifier is an email or username
+    const query = isEmail 
+      ? 'SELECT * FROM users WHERE email = ?' 
+      : 'SELECT * FROM users WHERE username = ?';
+    
+    db.get(query, [loginIdentifier], async (err, user) => {
       if (err) {
         return reject(err);
       }

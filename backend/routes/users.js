@@ -8,7 +8,7 @@ const express = require('express');
 const router = express.Router();
 const userModel = require('../models/user');
 const bcrypt = require('bcryptjs');
-// const messageModel = require('../models/message'); // Commented out until message model is available
+// messageModel import removed - was causing errors and not used in main route functionality
 const { query } = require('../database/connection');
 
 /**
@@ -72,18 +72,20 @@ router.post('/register', async (req, res) => {
  */
 router.post('/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    // Accept either username or email as login credential
+    const { username, email, password } = req.body;
+    const loginIdentifier = email || username;
     
     // Validate input
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
+    if (!loginIdentifier || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
     }
     
     // Authenticate user
-    const user = await userModel.verifyCredentials(username, password);
+    const user = await userModel.verifyCredentials(loginIdentifier, password);
     
     if (!user) {
-      return res.status(401).json({ error: 'Invalid username or password' });
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
     
     // Login successful
