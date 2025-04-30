@@ -16,11 +16,25 @@ if (!fs.existsSync(dataDir)) {
 }
 
 // Database file path from .env or default path
-// Check both DB_PATH and DATABASE_PATH for compatibility
-const dbPath = process.env.DB_PATH || process.env.DATABASE_PATH || path.join(__dirname, 'data', 'hostel.db');
+let dbPath;
+if (process.env.DB_PATH && (process.env.DB_PATH.startsWith('/') || process.env.DB_PATH.includes(':'))) {
+  // If it's an absolute path, use it directly
+  dbPath = process.env.DB_PATH;
+} else if (process.env.DB_PATH) {
+  // If it's a relative path, resolve it from the current directory
+  dbPath = path.resolve(process.cwd(), process.env.DB_PATH);
+} else if (process.env.DATABASE_PATH && (process.env.DATABASE_PATH.startsWith('/') || process.env.DATABASE_PATH.includes(':'))) {
+  // Same for DATABASE_PATH
+  dbPath = process.env.DATABASE_PATH;
+} else if (process.env.DATABASE_PATH) {
+  dbPath = path.resolve(process.cwd(), process.env.DATABASE_PATH);
+} else {
+  // Default path
+  dbPath = path.join(__dirname, 'data', 'hostel.db');
+}
 
 console.log('Database directory path:', __dirname);
-console.log('Database file path:', path.resolve(dbPath));
+console.log('Database file path:', dbPath);
 
 // Create a database connection
 const getDbConnection = () => {
