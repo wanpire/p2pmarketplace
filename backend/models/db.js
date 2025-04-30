@@ -28,6 +28,9 @@ if (process.env.DB_PATH && (process.env.DB_PATH.startsWith('/') || process.env.D
   dbPath = path.join(__dirname, '../database/data/hostel.db');
 }
 
+// Path to schema.sql
+const schemaPath = path.join(__dirname, '../database/schema.sql');
+
 // Ensure database directory exists
 const dbDir = path.dirname(dbPath);
 console.log('Model Database directory path:', dbDir);
@@ -66,7 +69,41 @@ function initializeDatabase() {
           return;
         }
         
-        resolve(db);
+        // Check for users table existence
+        db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'", (err, row) => {
+          if (err) {
+            console.error('Error checking for users table:', err.message);
+            reject(err);
+            return;
+          }
+          
+          // If users table doesn't exist, execute schema.sql
+          if (!row) {
+            console.log('Users table not found. Initializing database schema...');
+            
+            // Check if schema.sql exists
+            if (!fs.existsSync(schemaPath)) {
+              console.error('Schema file not found:', schemaPath);
+              reject(new Error('Schema file not found'));
+              return;
+            }
+            
+            // Read and execute schema.sql
+            const schema = fs.readFileSync(schemaPath, 'utf8');
+            db.exec(schema, (err) => {
+              if (err) {
+                console.error('Error initializing schema:', err.message);
+                reject(err);
+                return;
+              }
+              console.log('Database schema initialized successfully');
+              resolve(db);
+            });
+          } else {
+            console.log('Database schema already exists');
+            resolve(db);
+          }
+        });
       });
     });
   });
