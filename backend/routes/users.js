@@ -72,21 +72,30 @@ router.post('/register', async (req, res) => {
  */
 router.post('/login', async (req, res) => {
   try {
+    console.log('Login request received:', JSON.stringify(req.body));
+    
     // Accept either username or email as login credential
     const { username, email, password } = req.body;
     const loginIdentifier = email || username;
     
+    console.log('Login identifier:', loginIdentifier);
+    
     // Validate input
     if (!loginIdentifier || !password) {
+      console.log('Missing credentials:', { loginIdentifier: !!loginIdentifier, password: !!password });
       return res.status(400).json({ error: 'Email and password are required' });
     }
     
     // Authenticate user
+    console.log('Authenticating user with identifier:', loginIdentifier);
     const user = await userModel.verifyCredentials(loginIdentifier, password);
     
     if (!user) {
+      console.log('Authentication failed: Invalid credentials');
       return res.status(401).json({ error: 'Invalid email or password' });
     }
+    
+    console.log('Login successful for user:', user.username);
     
     // Login successful
     res.status(200).json({
@@ -99,8 +108,8 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error.message);
-    res.status(500).json({ error: 'Login failed' });
+    console.error('Login error:', error.message, error.stack);
+    res.status(500).json({ error: 'Login failed', message: error.message });
   }
 });
 

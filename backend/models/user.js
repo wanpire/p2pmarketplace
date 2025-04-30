@@ -186,32 +186,44 @@ async function verifyCredentials(loginIdentifier, password) {
   return new Promise((resolve, reject) => {
     // Check if the loginIdentifier is an email (contains @)
     const isEmail = loginIdentifier.includes('@');
+    console.log('Login type:', isEmail ? 'email' : 'username');
     
     // Query based on whether the identifier is an email or username
     const query = isEmail 
       ? 'SELECT * FROM users WHERE email = ?' 
       : 'SELECT * FROM users WHERE username = ?';
     
+    console.log('Login query:', query, 'with identifier:', loginIdentifier);
+    
     db.get(query, [loginIdentifier], async (err, user) => {
       if (err) {
+        console.error('Database error during login:', err.message);
         return reject(err);
       }
       
       if (!user) {
+        console.log('No user found with identifier:', loginIdentifier);
         return resolve(null);
       }
+      
+      console.log('User found, verifying password');
       
       try {
         // Verify password
         const match = await bcrypt.compare(password, user.password);
+        console.log('Password match result:', match);
+        
         if (!match) {
+          console.log('Password verification failed');
           return resolve(null);
         }
         
         // Never expose password hash
         const { password: passwordHash, ...userWithoutPassword } = user;
+        console.log('Successful login, returning user data');
         resolve(userWithoutPassword);
       } catch (error) {
+        console.error('Error during password verification:', error.message);
         reject(error);
       }
     });
