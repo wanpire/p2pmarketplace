@@ -101,7 +101,9 @@ router.post('/login', async (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     res.status(200).json({
+      success: true,
       message: 'Login successful',
+      token: 'dummy-token-' + user.id, // Simple placeholder token
       user: {
         id: user.id,
         username: user.username,
