@@ -98,6 +98,8 @@ router.post('/login', async (req, res) => {
     console.log('Login successful for user:', user.username);
     
     // Login successful
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     res.status(200).json({
       message: 'Login successful',
       user: {
@@ -108,8 +110,9 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error.message, error.stack);
-    res.status(500).json({ error: 'Login failed', message: error.message });
+    console.error('Login error:', error.message);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ error: 'Login failed', details: error.message });
   }
 });
 

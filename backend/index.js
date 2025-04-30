@@ -38,6 +38,25 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Add request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
+  console.log('Request headers:', JSON.stringify(req.headers));
+  
+  // Capture the original end method
+  const originalEnd = res.end;
+  
+  // Override the end method
+  res.end = function(...args) {
+    console.log(`${new Date().toISOString()} - Response status: ${res.statusCode}`);
+    console.log('Response headers:', JSON.stringify(res.getHeaders()));
+    // Call the original end method
+    return originalEnd.apply(this, args);
+  };
+  
+  next();
+});
+
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, process.env.UPLOAD_DIR || 'uploads')));
 
