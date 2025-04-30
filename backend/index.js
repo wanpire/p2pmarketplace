@@ -62,32 +62,30 @@ app.use((err, req, res, next) => {
 
 // Initialize database and start server
 async function initializeDatabase() {
-  return new Promise((resolve, reject) => {
+  try {
+    // Test database connection
     try {
-      // Test database connection
-      getDbConnection()
-        .then(db => {
-          db.close();
-          resolve();
-        })
-        .catch(err => {
-          console.error('Database connection error:', err.message);
-          console.log('Attempting to initialize database...');
-          
-          // If connection fails, try to initialize the database
-          initDb();
-          resolve();
-        });
-    } catch (error) {
-      reject(error);
+      const db = await getDbConnection();
+      db.close();
+      console.log('Successfully connected to existing database');
+      return;
+    } catch (err) {
+      console.error('Database connection error:', err.message);
+      console.log('Attempting to initialize database...');
+      
+      // If connection fails, initialize the database and wait for it to complete
+      await initDb();
+      console.log('Database initialized successfully');
     }
-  });
+  } catch (error) {
+    console.error('Failed to initialize database:', error.message);
+    throw error;
+  }
 }
 
 async function startServer() {
   try {
     await initializeDatabase();
-    console.log('Database initialized successfully');
     
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

@@ -16,7 +16,11 @@ if (!fs.existsSync(dataDir)) {
 }
 
 // Database file path from .env or default path
-const dbPath = process.env.DB_PATH || path.join(__dirname, 'data', 'hostel_marketplace.sqlite');
+// Check both DB_PATH and DATABASE_PATH for compatibility
+const dbPath = process.env.DB_PATH || process.env.DATABASE_PATH || path.join(__dirname, 'data', 'hostel.db');
+
+console.log('Database directory path:', __dirname);
+console.log('Database file path:', path.resolve(dbPath));
 
 // Create a database connection
 const getDbConnection = () => {
