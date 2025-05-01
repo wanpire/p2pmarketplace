@@ -21,8 +21,25 @@ const HostDashboard = () => {
 
   // Get host ID from localStorage
   const getHostId = () => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    return user?.id;
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) {
+        console.error('No user data in localStorage');
+        return null;
+      }
+      
+      const user = JSON.parse(userStr);
+      if (!user || !user.id) {
+        console.error('Invalid user data or missing ID:', user);
+        return null;
+      }
+      
+      console.log('Host ID retrieved:', user.id);
+      return user.id;
+    } catch (error) {
+      console.error('Error getting host ID:', error);
+      return null;
+    }
   };
 
   // Fetch hostels on component mount
@@ -31,20 +48,39 @@ const HostDashboard = () => {
       try {
         setLoading(true);
         const hostId = getHostId();
+        
+        // Check authentication
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('No authentication token found');
+          setError('Authentication required. Please log in again.');
+          setLoading(false);
+          return;
+        }
+        
         if (!hostId) {
           setError('User authentication required');
           setLoading(false);
           return;
         }
         
-        const data = await getHostelsByHost(hostId);
-        setHostels(data);
+        console.log('Fetching hostels for host ID:', hostId);
         
-        // If we have hostels, fetch bookings for the first one by default
-        if (data.length > 0) {
-          setSelectedHostel(data[0].id);
-          const bookingsData = await getHostelBookings(data[0].id);
-          setBookings(bookingsData);
+        try {
+          const data = await getHostelsByHost(hostId);
+          console.log('Hostels data received:', { count: data?.length || 0 });
+          setHostels(data || []);
+          
+          // If we have hostels, fetch bookings for the first one by default
+          if (data && data.length > 0) {
+            setSelectedHostel(data[0].id);
+            const bookingsData = await getHostelBookings(data[0].id);
+            console.log('Bookings data received:', { count: bookingsData?.length || 0 });
+            setBookings(bookingsData || []);
+          }
+        } catch (err) {
+          console.error('API call error:', err);
+          throw err;
         }
       } catch (err) {
         console.error('Error fetching host data:', err);

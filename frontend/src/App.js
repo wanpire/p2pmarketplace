@@ -23,12 +23,31 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
+    console.error('Error caught by ErrorBoundary:', error);
+    console.error('Component Stack:', errorInfo?.componentStack);
     this.setState({ errorInfo });
+    
+    // Log additional details that might help debug
+    try {
+      const authState = {
+        hasToken: !!localStorage.getItem('token'),
+        hasUser: !!localStorage.getItem('user'),
+        path: window.location.pathname
+      };
+      console.error('Auth state when error occurred:', authState);
+    } catch (e) {
+      console.error('Error getting auth state:', e);
+    }
   }
 
   render() {
     if (this.state.hasError) {
+      const isAuthError = 
+        this.state.error?.message?.includes('auth') || 
+        this.state.error?.message?.includes('token') ||
+        this.state.error?.message?.includes('login') ||
+        window.location.pathname.includes('/dashboard');
+        
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="text-center p-8 max-w-lg">
@@ -44,21 +63,32 @@ class ErrorBoundary extends React.Component {
                 )}
               </div>
             )}
-            <button
-              onClick={() => {
-                // Clear any potential auth issues
-                if (window.location.pathname.includes('/dashboard')) {
-                  localStorage.removeItem('token');
-                  localStorage.removeItem('user');
-                  window.location.href = '/login';
-                } else {
-                  window.location.reload();
-                }
-              }}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-            >
-              {window.location.pathname.includes('/dashboard') ? 'Go to Login' : 'Reload Page'}
-            </button>
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 justify-center">
+              <button
+                onClick={() => {
+                  // Clear auth data and redirect to login if seems auth-related
+                  if (isAuthError) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/login';
+                  } else {
+                    window.location.reload();
+                  }
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                {isAuthError ? 'Go to Login' : 'Reload Page'}
+              </button>
+              
+              <button
+                onClick={() => {
+                  window.location.href = '/';
+                }}
+                className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
+              >
+                Back to Home
+              </button>
+            </div>
           </div>
         </div>
       );

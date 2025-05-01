@@ -24,15 +24,40 @@ const UserDashboard = () => {
     const fetchBookings = async () => {
       try {
         setLoading(true);
-        const [allBookings, upcoming, past] = await Promise.all([
-          getUserBookings(),
-          getUpcomingBookings(),
-          getPastBookings()
-        ]);
         
-        setBookings(allBookings);
-        setUpcomingBookings(upcoming);
-        setAllPastBookings(past);
+        // Check for user authentication first
+        const user = localStorage.getItem('user');
+        const token = localStorage.getItem('token');
+        
+        if (!user || !token) {
+          console.error('User not authenticated or missing token');
+          setError('Authentication required. Please log in again.');
+          setLoading(false);
+          return;
+        }
+        
+        console.log('Fetching user bookings...');
+        
+        try {
+          const [allBookings, upcoming, past] = await Promise.all([
+            getUserBookings(),
+            getUpcomingBookings(),
+            getPastBookings()
+          ]);
+          
+          console.log('Bookings data received:', { 
+            allCount: allBookings?.length || 0,
+            upcomingCount: upcoming?.length || 0, 
+            pastCount: past?.length || 0 
+          });
+          
+          setBookings(allBookings || []);
+          setUpcomingBookings(upcoming || []);
+          setAllPastBookings(past || []);
+        } catch (err) {
+          console.error('Error in API calls:', err);
+          throw err;
+        }
       } catch (err) {
         console.error('Error fetching bookings:', err);
         setError('Failed to load bookings. Please try again.');

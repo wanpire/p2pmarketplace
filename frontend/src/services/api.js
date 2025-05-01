@@ -21,12 +21,23 @@ const api = axios.create({
 // Add request logger for debugging
 api.interceptors.request.use(
   (config) => {
-    console.log(`API Request: ${config.method.toUpperCase()} ${config.url}`, config);
+    // Don't log sensitive info from auth requests
+    const isAuthRequest = config.url?.includes('/login') || config.url?.includes('/register');
+    
+    if (isAuthRequest) {
+      console.log(`API Auth Request: ${config.method.toUpperCase()} ${config.url}`);
+    } else {
+      console.log(`API Request: ${config.method.toUpperCase()} ${config.url}`, 
+        { headers: config.headers, params: config.params });
+    }
     
     const token = localStorage.getItem('token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
+    } else if (!isAuthRequest) {
+      console.warn('No auth token available for request:', config.url);
     }
+    
     return config;
   },
   (error) => {
@@ -38,11 +49,26 @@ api.interceptors.request.use(
 // Response interceptor for handling errors and logging
 api.interceptors.response.use(
   (response) => {
-    console.log(`API Response: ${response.status}`, response.data);
+    // Don't log potentially sensitive user data responses
+    const isAuthResponse = response.config.url?.includes('/login') || 
+                           response.config.url?.includes('/register');
+    
+    if (isAuthResponse) {
+      console.log(`API Auth Response: ${response.status} ${response.config.url}`);
+    } else {
+      console.log(`API Response: ${response.status} ${response.config.url}`, 
+        { data: response.data });
+    }
+    
     return response;
   },
   (error) => {
-    console.error('API Response Error:', error);
+    console.error('API Response Error:', {
+      message: error.message,
+      status: error.response?.status,
+      url: error.config?.url,
+      data: error.response?.data
+    });
     
     // Handle session expiration
     if (error.response && error.response.status === 401) {
@@ -51,6 +77,7 @@ api.interceptors.response.use(
       localStorage.removeItem('user');
       // Redirect to login can be handled by the calling component
     }
+    
     return Promise.reject(error);
   }
 );

@@ -96,10 +96,13 @@ const LoginForm = () => {
     setIsLoading(true);
     
     try {
+      console.log('Attempting login with:', { email: formData.email });
       const response = await loginUser({
         email: formData.email,
         password: formData.password
       });
+      
+      console.log('Login API response:', response);
       
       // Check if we got a user object and token back
       if (response && response.token && response.user) {
@@ -111,18 +114,30 @@ const LoginForm = () => {
           ...response.user,
           is_host: response.user.role === 'host'
         };
+        console.log('Storing user data in localStorage:', userData);
         localStorage.setItem('user', JSON.stringify(userData));
         
         // Use navigate instead of direct URL manipulation
         const redirectPath = userData.is_host ? '/dashboard/host' : '/dashboard/user';
-        navigate(redirectPath, { replace: true });
+        console.log('Redirecting to:', redirectPath);
+        
+        // Add a short delay before redirect to ensure state is updated
+        setTimeout(() => {
+          navigate(redirectPath, { replace: true });
+        }, 100);
       } else {
         // Unexpected response format
+        console.error('Unexpected API response format:', response);
         setError('Something went wrong. Please try again.');
-        console.error('Unexpected response format:', response);
       }
     } catch (err) {
       console.error('Login error:', err);
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response,
+        stack: err.stack
+      });
+      
       // Handle different error scenarios
       const errorMessage = err.response?.data?.error || 
                          err.response?.data?.message ||
