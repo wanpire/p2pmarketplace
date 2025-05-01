@@ -5,35 +5,38 @@ import { logoutUser } from '../services/api';
 /**
  * Navbar component that provides navigation links and user authentication state
  * Responsive design with mobile menu toggle
+ * 
+ * @param {Object} props - Component props
+ * @param {boolean} props.isAuthenticated - Whether user is authenticated
+ * @param {boolean} props.isHost - Whether authenticated user is a host
  */
-const Navbar = () => {
+const Navbar = ({ isAuthenticated, isHost }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Check if user is logged in
+  // Load user details from local storage
   useEffect(() => {
     console.log("Navbar: Checking authentication status");
-    const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
     
-    if (token && storedUser) {
+    if (isAuthenticated) {
       try {
-        const parsedUser = JSON.parse(storedUser);
-        console.log("Navbar: User authenticated:", parsedUser);
-        setUser(parsedUser);
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          console.log("Navbar: User authenticated:", parsedUser);
+          setUser(parsedUser);
+        }
       } catch (error) {
         console.error("Error parsing user data:", error);
         setUser(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
       }
     } else {
       console.log("Navbar: No authenticated user found");
       setUser(null);
     }
-  }, [location.pathname]); // Re-check when route changes
+  }, [isAuthenticated, location.pathname]); // Re-check when auth state or route changes
 
   // Handle logout
   const handleLogout = () => {
@@ -82,7 +85,7 @@ const Navbar = () => {
               Search
             </Link>
             
-            {user ? (
+            {isAuthenticated ? (
               <>
                 <Link 
                   to="/dashboard/user"
@@ -92,7 +95,7 @@ const Navbar = () => {
                   My Bookings
                 </Link>
                 
-                {user.is_host && (
+                {isHost && (
                   <Link 
                     to="/dashboard/host"
                     className="text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium"
@@ -200,7 +203,7 @@ const Navbar = () => {
             Search
           </Link>
           
-          {user ? (
+          {isAuthenticated ? (
             <>
               <Link
                 to="/dashboard/user"
@@ -210,7 +213,7 @@ const Navbar = () => {
                 My Bookings
               </Link>
               
-              {user.is_host && (
+              {isHost && (
                 <Link
                   to="/dashboard/host"
                   className="text-white hover:bg-blue-700 block px-3 py-2 rounded-md text-base font-medium"

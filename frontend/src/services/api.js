@@ -13,30 +13,43 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Add withCredentials for CORS requests with credentials
+  withCredentials: true,
+  timeout: 15000 // 15 second timeout
 });
 
-// Request interceptor for adding auth token
+// Add request logger for debugging
 api.interceptors.request.use(
   (config) => {
+    console.log(`API Request: ${config.method.toUpperCase()} ${config.url}`, config);
+    
     const token = localStorage.getItem('token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('API Request Error:', error);
+    return Promise.reject(error);
+  }
 );
 
-// Response interceptor for handling errors
+// Response interceptor for handling errors and logging
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`API Response: ${response.status}`, response.data);
+    return response;
+  },
   (error) => {
+    console.error('API Response Error:', error);
+    
     // Handle session expiration
     if (error.response && error.response.status === 401) {
+      console.log('Unauthorized access, clearing auth data');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      // Redirect to login if needed
-      // window.location.href = '/login';
+      // Redirect to login can be handled by the calling component
     }
     return Promise.reject(error);
   }
@@ -50,8 +63,13 @@ api.interceptors.response.use(
  * @returns {Promise<Object>} - Response from the API
  */
 export const registerUser = async (data) => {
-  const response = await api.post('/users/register', data);
-  return response.data;
+  try {
+    const response = await api.post('/users/register', data);
+    return response.data;
+  } catch (error) {
+    console.error('Register error:', error);
+    throw error;
+  }
 };
 
 /**
@@ -60,13 +78,27 @@ export const registerUser = async (data) => {
  * @returns {Promise<Object>} - Response from the API
  */
 export const loginUser = async (data) => {
-  const response = await api.post('/users/login', data);
-  // Store token if it's returned
-  if (response.data.token) {
-    localStorage.setItem('token', response.data.token);
-    localStorage.setItem('user', JSON.stringify(response.data.user));
+  try {
+    const response = await api.post('/users/login', data);
+    
+    // Store token if it's returned
+    if (response.data && response.data.token) {
+      localStorage.setItem('token', response.data.token);
+      
+      // Store user data with is_host flag for compatibility
+      if (response.data.user) {
+        const userData = {
+          ...response.data.user,
+          is_host: response.data.user.role === 'host'
+        };
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
+    }
+    return response.data;
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
   }
-  return response.data;
 };
 
 /**

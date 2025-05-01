@@ -108,9 +108,12 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' } // Token expires in 7 days
     );
     
+    // Set CORS headers
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    
     // Login successful
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     res.status(200).json({
       success: true,
       message: 'Login successful',
@@ -119,7 +122,8 @@ router.post('/login', async (req, res) => {
         id: user.id,
         username: user.username,
         role: user.role,
-        email: user.email
+        email: user.email,
+        is_host: user.role === 'host' // Add is_host flag for frontend compatibility
       }
     });
   } catch (error) {

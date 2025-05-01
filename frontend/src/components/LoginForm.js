@@ -30,11 +30,18 @@ const LoginForm = () => {
     const user = localStorage.getItem('user');
     
     if (token && user) {
-      const userData = JSON.parse(user);
-      if (userData.is_host) {
-        navigate('/dashboard/host');
-      } else {
-        navigate('/dashboard/user');
+      try {
+        const userData = JSON.parse(user);
+        if (userData.role === 'host') {
+          navigate('/dashboard/host');
+        } else {
+          navigate('/dashboard/user');
+        }
+      } catch (e) {
+        // If there's an error parsing the user data, clear localStorage
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        console.error('Error parsing user data:', e);
       }
     }
   }, [navigate, isAuthenticated]);
@@ -95,15 +102,24 @@ const LoginForm = () => {
       });
       
       // Check if we got a user object and token back
-      if (response.user && response.token) {
+      if (response && response.token && response.user) {
         console.log('Login successful, user:', response.user);
         setIsAuthenticated(true);
         
-        // Force reload to update the navbar state
-        window.location.href = response.user.is_host ? '/dashboard/host' : '/dashboard/user';
+        // Store user role in localStorage
+        const userData = {
+          ...response.user,
+          is_host: response.user.role === 'host'
+        };
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // Use navigate instead of direct URL manipulation
+        const redirectPath = userData.is_host ? '/dashboard/host' : '/dashboard/user';
+        navigate(redirectPath, { replace: true });
       } else {
         // Unexpected response format
         setError('Something went wrong. Please try again.');
+        console.error('Unexpected response format:', response);
       }
     } catch (err) {
       console.error('Login error:', err);
